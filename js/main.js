@@ -60,10 +60,13 @@ const direction = new THREE.Vector3();
 const keys = { w: false, a: false, s: false, d: false };
 let myId = null;
 let myName = 'Player';
+let myWeapon = 'rifle';
+let mySpeed = 1;
 let ws = null;
 let myHealth = 100;
 const remotes = new Map();
 const labels = new Map();
+const puMeshes = new Map();
 const isMobile = 'ontouchstart' in window;
 
 if (isMobile) document.getElementById('touch').classList.add('show');
@@ -102,15 +105,14 @@ function connect() {
     }
     if (msg.type === 'players') {
       document.getElementById('count').textContent = msg.players.length;
-      if (msg.map) {
-        document.getElementById('map').textContent = msg.map;
-      }
+      if (msg.map) document.getElementById('map').textContent = msg.map;
       const seen = new Set();
       let board = '';
       for (const p of msg.players) {
         board += `${p.name}: ${p.score} (${p.alive ? p.health : 'DEAD'})<br>`;
         if (p.id === myId) {
           myHealth = p.health;
+          mySpeed = p.speedBoost || 1;
           document.getElementById('hp').textContent = p.health;
           continue;
         }
@@ -141,6 +143,26 @@ function connect() {
           labels.delete(id);
         }
       }
+    } else if (msg.type === 'powerups') {
+      const seen = new Set();
+      for (const pu of msg.list) {
+        seen.add(pu.id);
+        if (!puMeshes.has(pu.id)) {
+          const color = pu.type === 'health' ? 0x00ff00 : pu.type === 'damage' ? 0xff4400 : 0x00aaff;
+          const m = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.8, 0.8), new THREE.MeshLambertMaterial({ color }));
+          scene.add(m);
+          puMeshes.set(pu.id, m);
+        }
+        const m = puMeshes.get(pu.id);
+        m.position.fromArray(pu.pos);
+        m.visible = pu.active;
+      }
+      for (const id of [...puMeshes.keys()]) {
+        if (!seen.has(id)) {
+          scene.remove(puMeshes.get(id));
+          puMeshes.delete(id);
+        }
+      }
     } else if (msg.type === 'chat') {
       const log = document.getElementById('log');
       log.innerHTML += `<div>${msg.name}: ${msg.text}</div>`;
@@ -148,6 +170,10 @@ function connect() {
     } else if (msg.type === 'kill') {
       const log = document.getElementById('log');
       log.innerHTML += `<div>${msg.killer} killed ${msg.victim}</div>`;
+      log.scrollTop = log.scrollHeight;
+    } else if (msg.type === 'pickup') {
+      const log = document.getElementById('log');
+      log.innerHTML += `<div>Picked up ${msg.power}</div>`;
       log.scrollTop = log.scrollHeight;
     } else if (msg.type === 'map') {
       document.getElementById('map').textContent = msg.map;
@@ -175,13 +201,16 @@ function shoot() {
 document.addEventListener('mousedown', () => { if (!isMobile && controls.isLocked) shoot(); });
 document.getElementById('fire').addEventListener('click', shoot);
 
-document.querySelectorAll('#vote button').forEach(btn => {
+document.querySelectorAll('#weapons button').forEach(btn => {
   btn.addEventListener('click', () => {
-    if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: 'vote', map: btn.dataset.map }));
+    myWeapon = btn.dataset.wpn;
+    document.getElementById('wpn').textContent = myWeapon;
   });
 });
-
 document.addEventListener('keydown', (e) => {
+  if (e.code === 'Digit1') { myWeapon = 'rifle'; document.getElementById('wpn').textContent = myWeapon; }
+  if (e.code === 'Digit2') { myWeapon = 'shotgun'; document.getElementById('wpn').textContent = myWeapon; }
+  if (e.code === 'Digit3') { myWeapon = 'sniper'; document.getElementById('wpn').textContent = myWeapon; }
   if (e.code === 'KeyW') keys.w = true;
   if (e.code === 'KeyA') keys.a = true;
   if (e.code === 'KeyS') keys.s = true;
@@ -192,6 +221,12 @@ document.addEventListener('keyup', (e) => {
   if (e.code === 'KeyA') keys.a = false;
   if (e.code === 'KeyS') keys.s = false;
   if (e.code === 'KeyD') keys.d = false;
+});
+
+document.querySelectorAll('#vote button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: 'vote', map: btn.dataset.map }));
+  });
 });
 
 document.getElementById('chatInput').addEventListener('keydown', (e) => {
@@ -228,13 +263,14 @@ function animate() {
   const dt = Math.min(clock.getDelta(), 0.033);
   const can = (isMobile || controls.isLocked) && myHealth > 0;
   if (can) {
+    const spd = 24 * mySpeed;
     velocity.x *= 1 - 5 * dt;
     velocity.z *= 1 - 5 * dt;
     direction.z = Number(keys.w) - Number(keys.s);
     direction.x = Number(keys.d) - Number(keys.a);
     if (direction.lengthSq() > 0) direction.normalize();
-    if (keys.w || keys.s) velocity.z -= direction.z * 24 * dt;
-    if (keys.a || keys.d) velocity.x -= direction.x * 24 * dt;
+    if (keys.w || keys.s) velocity.z -= direction.z * spd * dt;
+    if (keys.a || keys.d) velocity.x -= direction.x * spd * dt;
     controls.moveRight(-velocity.x * dt);
     controls.moveForward(-velocity.z * dt);
     player.position.y = 1.6;
@@ -246,7 +282,8 @@ function animate() {
       type: 'update',
       id: myId,
       pos: player.position.toArray(),
-      rot: player.rotation.y
+      rot: player.rotation.y,
+      weapon: myWeapon
     }));
   }
   renderer.render(scene, camera);

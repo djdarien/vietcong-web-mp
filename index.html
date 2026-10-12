@@ -13,22 +13,28 @@
     #chat input { width: 100%; background: #111; color: #0f0; border: 1px solid #0f0; padding: 4px; }
     #log { height: 80px; overflow-y: auto; font-size: 12px; background: rgba(0,0,0,0.5); }
     #vote { position: absolute; bottom: 10px; right: 10px; }
-    #vote button { background: #111; color: #0f0; border: 1px solid #0f0; padding: 6px 10px; margin: 2px; cursor: pointer; }
+    #vote button, #weapons button { background: #111; color: #0f0; border: 1px solid #0f0; padding: 6px 10px; margin: 2px; cursor: pointer; }
+    #weapons { position: absolute; bottom: 60px; right: 10px; }
     .touch { display: none; position: absolute; z-index: 10; }
     .touch.show { display: block; }
     #joy { left: 16px; bottom: 30px; width: 100px; height: 100px; border: 2px solid #0f0; border-radius: 50%; }
     #stick { width: 40px; height: 40px; background: #0f0; border-radius: 50%; position: absolute; left: 30px; top: 30px; }
-    #fire { right: 20px; bottom: 100px; width: 60px; height: 60px; border: 2px solid #0f0; border-radius: 50%; background: rgba(0,255,0,0.3); color: #0f0; }
+    #fire { right: 20px; bottom: 160px; width: 60px; height: 60px; border: 2px solid #0f0; border-radius: 50%; background: rgba(0,255,0,0.3); color: #0f0; }
     #crosshair { position: absolute; top: 50%; left: 50%; width: 12px; height: 12px; margin: -6px; border: 2px solid #0f0; border-radius: 50%; pointer-events: none; }
   </style>
 </head>
 <body>
-  <div id="hud">HP: <span id="hp">100</span> | Map: <span id="map">jungle</span> | Players: <span id="count">0</span></div>
+  <div id="hud">HP: <span id="hp">100</span> | Wpn: <span id="wpn">rifle</span> | Map: <span id="map">jungle</span> | Players: <span id="count">0</span></div>
   <div id="scoreboard"></div>
   <div id="crosshair"></div>
   <div id="chat">
     <div id="log"></div>
     <input id="chatInput" placeholder="Chat..." />
+  </div>
+  <div id="weapons">
+    <button data-wpn="rifle">1 Rifle</button>
+    <button data-wpn="shotgun">2 Shotgun</button>
+    <button data-wpn="sniper">3 Sniper</button>
   </div>
   <div id="vote">
     <button data-map="jungle">Vote Jungle</button>
