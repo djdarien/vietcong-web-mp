@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>vietcong-web-mp</title>
+  <style>
+    body { margin: 0; overflow: hidden; background: #000; font-family: monospace; color: #0f0; touch-action: none; }
+    canvas { display: block; }
+    #hud { position: absolute; top: 10px; left: 10px; pointer-events: none; text-shadow: 0 0 4px #000; }
+    #chat { position: absolute; bottom: 10px; left: 10px; width: 280px; }
+    #chat input { width: 100%; background: #111; color: #0f0; border: 1px solid #0f0; padding: 4px; }
+    #log { height: 80px; overflow-y: auto; font-size: 12px; background: rgba(0,0,0,0.5); }
+    .touch { display: none; position: absolute; z-index: 10; }
+    .touch.show { display: block; }
+    #joy { left: 16px; bottom: 30px; width: 100px; height: 100px; border: 2px solid #0f0; border-radius: 50%; }
+    #stick { width: 40px; height: 40px; background: #0f0; border-radius: 50%; position: absolute; left: 30px; top: 30px; }
+    #fire { right: 20px; bottom: 40px; width: 60px; height: 60px; border: 2px solid #0f0; border-radius: 50%; background: rgba(0,255,0,0.3); color: #0f0; }
+  </style>
+</head>
+<body>
+  <div id="hud">Players: <span id="count">0</span></div>
+  <div id="chat">
+    <div id="log"></div>
+    <input id="chatInput" placeholder="Chat..." />
+  </div>
+  <div class="touch" id="touch">
+    <div id="joy"><div id="stick"></div></div>
+    <button id="fire">FIRE</button>
+  </div>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

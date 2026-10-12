@@ -1,0 +1,13 @@
+{
+  "name": "vietcong-web-mp",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "npx serve .",
+    "server": "node server.js",
+    "dev": "npm run server & npm start"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}
