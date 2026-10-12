@@ -5,55 +5,88 @@ const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 500);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(innerWidth, innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.9;
 document.body.appendChild(renderer.domElement);
 
 const controls = new PointerLockControls(camera, document.body);
 scene.add(controls.getObject());
 
-scene.add(new THREE.HemisphereLight(0x6aa86a, 0x1a3010, 0.6));
-const dir = new THREE.DirectionalLight(0xffeecc, 0.7);
-dir.position.set(30, 60, 10);
-scene.add(dir);
+// Red Dawn dusk lighting — warm, low, melancholic
+scene.add(new THREE.HemisphereLight(0xffcc88, 0x2a1a08, 0.45));
+const sun = new THREE.DirectionalLight(0xffaa55, 0.85);
+sun.position.set(-40, 25, -30);
+scene.add(sun);
+const fill = new THREE.DirectionalLight(0x664422, 0.25);
+fill.position.set(20, 10, 40);
+scene.add(fill);
 
 let ground, trees;
 function buildMap(name) {
-  while (scene.children.length > 3) scene.remove(scene.children[scene.children.length - 1]);
+  while (scene.children.length > 5) scene.remove(scene.children[scene.children.length - 1]);
+  // Dusk palette
   if (name === 'river') {
-    scene.background = new THREE.Color(0x3d7a4a);
-    scene.fog = new THREE.FogExp2(0x3d7a4a, 0.01);
+    scene.background = new THREE.Color(0x4a3020);
+    scene.fog = new THREE.FogExp2(0x4a3020, 0.009);
   } else if (name === 'docks') {
-    scene.background = new THREE.Color(0x4a7a9a);
-    scene.fog = new THREE.FogExp2(0x4a7a9a, 0.008);
+    scene.background = new THREE.Color(0x3a2a1a);
+    scene.fog = new THREE.FogExp2(0x3a2a1a, 0.007);
   } else {
-    scene.background = new THREE.Color(0x2d5a3a);
-    scene.fog = new THREE.FogExp2(0x2d5a3a, 0.012);
+    scene.background = new THREE.Color(0x3d2a18);
+    scene.fog = new THREE.FogExp2(0x3d2a18, 0.01);
   }
-  ground = new THREE.Mesh(new THREE.PlaneGeometry(300, 300), new THREE.MeshLambertMaterial({ color: 0x1e3d12 }));
+  ground = new THREE.Mesh(new THREE.PlaneGeometry(300, 300), new THREE.MeshLambertMaterial({ color: 0x2a1e10 }));
   ground.rotation.x = -Math.PI / 2;
   scene.add(ground);
   const dummy = new THREE.Object3D();
-  trees = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.25, 0.35, 5, 5), new THREE.MeshLambertMaterial({ color: 0x2e2014 }), 40);
+  trees = new THREE.InstancedMesh(
+    new THREE.CylinderGeometry(0.25, 0.35, 5, 5),
+    new THREE.MeshLambertMaterial({ color: 0x1a120a }),
+    40
+  );
+  const canopy = new THREE.InstancedMesh(
+    new THREE.ConeGeometry(1.6, 2.4, 5),
+    new THREE.MeshLambertMaterial({ color: 0x1e2a12 }),
+    40
+  );
   for (let i = 0; i < 40; i++) {
     dummy.position.set((Math.random() - 0.5) * 180, 2.5, (Math.random() - 0.5) * 180);
     dummy.updateMatrix();
     trees.setMatrixAt(i, dummy.matrix);
+    dummy.position.y = 5.5;
+    dummy.updateMatrix();
+    canopy.setMatrixAt(i, dummy.matrix);
   }
-  trees.instanceMatrix.needsUpdate = true;
-  scene.add(trees);
+  trees.instanceMatrix.needsUpdate = canopy.instanceMatrix.needsUpdate = true;
+  scene.add(trees, canopy);
   if (name === 'river') {
-    const water = new THREE.Mesh(new THREE.PlaneGeometry(20, 200), new THREE.MeshLambertMaterial({ color: 0x2a5a7a, transparent: true, opacity: 0.7 }));
+    const water = new THREE.Mesh(
+      new THREE.PlaneGeometry(20, 200),
+      new THREE.MeshLambertMaterial({ color: 0x2a3a4a, transparent: true, opacity: 0.65 })
+    );
     water.rotation.x = -Math.PI / 2;
     water.position.y = 0.1;
     scene.add(water);
   }
   if (name === 'docks') {
-    const pier = new THREE.Mesh(new THREE.BoxGeometry(40, 0.4, 8), new THREE.MeshLambertMaterial({ color: 0x5a4a30 }));
+    const pier = new THREE.Mesh(new THREE.BoxGeometry(40, 0.4, 8), new THREE.MeshLambertMaterial({ color: 0x4a3820 }));
     pier.position.set(0, 0.3, -20);
     scene.add(pier);
   }
   scene.add(controls.getObject());
 }
 buildMap('jungle');
+
+// Optional local theme — user places their own red-dawn.mp3
+function tryLocalAudio() {
+  const audio = new Audio('red-dawn.mp3');
+  audio.loop = true;
+  audio.volume = 0.35;
+  audio.play().catch(() => {
+    document.getElementById('audioNote').textContent = 'No local theme — place red-dawn.mp3 next to index.html';
+  });
+}
+tryLocalAudio();
 
 const velocity = new THREE.Vector3();
 const direction = new THREE.Vector3();
@@ -76,9 +109,9 @@ function makeLabel(text) {
   const canvas = document.createElement('canvas');
   canvas.width = 256; canvas.height = 64;
   const ctx = canvas.getContext('2d');
-  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  ctx.fillStyle = 'rgba(20,12,4,0.7)';
   ctx.fillRect(0, 0, 256, 64);
-  ctx.fillStyle = '#0f0';
+  ctx.fillStyle = '#f0d090';
   ctx.font = '28px monospace';
   ctx.textAlign = 'center';
   ctx.fillText(text, 128, 40);
@@ -118,7 +151,7 @@ function connect() {
         }
         seen.add(p.id);
         if (!remotes.has(p.id)) {
-          const m = new THREE.Mesh(new THREE.CapsuleGeometry(0.35, 1, 4, 6), new THREE.MeshLambertMaterial({ color: 0x2a6a8a }));
+          const m = new THREE.Mesh(new THREE.CapsuleGeometry(0.35, 1, 4, 6), new THREE.MeshLambertMaterial({ color: 0x4a6a8a }));
           scene.add(m);
           const label = makeLabel(p.name);
           scene.add(label);
@@ -148,7 +181,7 @@ function connect() {
       for (const pu of msg.list) {
         seen.add(pu.id);
         if (!puMeshes.has(pu.id)) {
-          const color = pu.type === 'health' ? 0x00ff00 : pu.type === 'damage' ? 0xff4400 : 0x00aaff;
+          const color = pu.type === 'health' ? 0x88aa44 : pu.type === 'damage' ? 0xcc6633 : 0x6688aa;
           const m = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.8, 0.8), new THREE.MeshLambertMaterial({ color }));
           scene.add(m);
           puMeshes.set(pu.id, m);
